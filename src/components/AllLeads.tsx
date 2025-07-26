@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Lead } from '../types/lead';
 
 interface AllLeadsProps {
@@ -8,6 +10,56 @@ interface AllLeadsProps {
 }
 
 export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }: AllLeadsProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const leadsPerPage = 10;
+  
+  // Calculate pagination values
+  const totalPages = Math.ceil(leads.length / leadsPerPage);
+  const startIndex = (currentPage - 1) * leadsPerPage;
+  const endIndex = startIndex + leadsPerPage;
+  const currentLeads = leads.slice(startIndex, endIndex);
+
+  // Reset to first page when leads change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [leads]);
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination with ellipsis
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   if (isLoading) {
     return (
       <div className="all-leads">
@@ -33,8 +85,15 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
       </div>
 
       <div className="all-leads-content">
-        <h2 className="all-leads-title">All Leads</h2>
-        <p className="all-leads-subtitle">Tap on a lead to view detailed insights</p>
+        <div className="all-leads-title-section">
+          <h2 className="all-leads-title">All Leads</h2>
+          <p className="all-leads-subtitle">Tap on a lead to view detailed insights</p>
+          {leads.length > 0 && (
+            <div className="leads-count">
+              Showing {startIndex + 1}-{Math.min(endIndex, leads.length)} of {leads.length} leads
+            </div>
+          )}
+        </div>
 
         {leads.length === 0 ? (
           <div className="no-leads">
@@ -53,7 +112,7 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
                   </tr>
                 </thead>
                 <tbody>
-                  {leads.map((lead) => {
+                  {currentLeads.map((lead) => {
                     const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
                     return (
                       <tr 
@@ -80,7 +139,7 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
 
             {/* Mobile card view */}
             <div className="leads-cards-container mobile-only">
-              {leads.map((lead) => {
+              {currentLeads.map((lead) => {
                 const fullName = [lead.first_name, lead.last_name].filter(Boolean).join(' ');
                 return (
                   <div 
@@ -104,6 +163,46 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
                 );
               })}
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="pagination-container">
+                <button 
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="pagination-button pagination-prev"
+                  aria-label="Previous page"
+                >
+                  <ChevronLeft size={16} />
+                  Previous
+                </button>
+
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    <button
+                      key={index}
+                      onClick={() => typeof page === 'number' ? handlePageClick(page) : undefined}
+                      disabled={page === '...' || page === currentPage}
+                      className={`pagination-page ${
+                        page === currentPage ? 'active' : ''
+                      } ${page === '...' ? 'ellipsis' : ''}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="pagination-button pagination-next"
+                  aria-label="Next page"
+                >
+                  Next
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
