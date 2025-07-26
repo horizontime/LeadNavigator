@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Header from './components/Header';
 import LeadLookup from './components/LeadLookup';
+import AllLeads from './components/AllLeads';
 import LeadInfo from './components/LeadInfo';
 import InsightsSection from './components/InsightsSection';
 import type { Lead, LeadInsight } from './types/lead';
@@ -11,7 +12,10 @@ import './App.css';
 function App() {
   const [lead, setLead] = useState<Lead | null>(null);
   const [insights, setInsights] = useState<LeadInsight[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [showAllLeads, setShowAllLeads] = useState(false);
   const [isLoadingLead, setIsLoadingLead] = useState(false);
+  const [isLoadingLeads, setIsLoadingLeads] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -21,6 +25,7 @@ function App() {
     setError('');
     setLead(null);
     setInsights([]);
+    setShowAllLeads(false); // Hide leads table when searching
 
     try {
       // For demo purposes, using mock data. In production, use actual API:
@@ -42,9 +47,48 @@ function App() {
     }
   };
 
-  const handleBrowseLeads = () => {
-    // For demo purposes, just search for a default lead
-    handleSearchLead('lead-003');
+  const handleBrowseLeads = async () => {
+    setIsLoadingLeads(true);
+    setError('');
+    setLead(null);
+    setInsights([]);
+    setShowAllLeads(true);
+
+    try {
+      // For demo purposes, using mock data. In production, use actual API:
+      // const leadsData = await suiteCRMApi.getAllLeads();
+      const leadsData = await suiteCRMApi.getMockLeads();
+      setLeads(leadsData);
+    } catch (err) {
+      setError('Failed to load leads');
+      console.error('Error:', err);
+    } finally {
+      setIsLoadingLeads(false);
+    }
+  };
+
+  const handleSelectLead = async (selectedLead: Lead) => {
+    setIsLoadingInsights(true);
+    setError('');
+    setLead(selectedLead);
+    setInsights([]);
+    setShowAllLeads(false); // Hide leads table when a lead is selected
+
+    try {
+      // Generate AI insights for selected lead
+      const generatedInsights = await aiInsights.generateInsights(selectedLead);
+      setInsights(generatedInsights);
+    } catch (err) {
+      setError('Failed to generate insights');
+      console.error('Error:', err);
+    } finally {
+      setIsLoadingInsights(false);
+    }
+  };
+
+  const handleHideTable = () => {
+    setShowAllLeads(false);
+    setLeads([]);
   };
 
   return (
@@ -56,13 +100,22 @@ function App() {
           <LeadLookup 
             onSearchLead={handleSearchLead}
             onBrowseLeads={handleBrowseLeads}
-            isLoading={isLoadingLead}
+            isLoading={isLoadingLead || isLoadingLeads}
           />
 
           {error && (
             <div className="error-message">
               <p>{error}</p>
             </div>
+          )}
+
+          {showAllLeads && (
+            <AllLeads 
+              leads={leads}
+              onSelectLead={handleSelectLead}
+              onHideTable={handleHideTable}
+              isLoading={isLoadingLeads}
+            />
           )}
 
           {isLoadingLead && (
@@ -72,7 +125,7 @@ function App() {
             </div>
           )}
 
-          {lead && (
+          {lead && !showAllLeads && (
             <>
               <LeadInfo lead={lead} />
               <InsightsSection 

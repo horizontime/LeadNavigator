@@ -157,6 +157,220 @@ body {
   cursor: not-allowed;
 }
 
+/* All Leads Styles */
+.all-leads {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.all-leads-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.hide-table-button {
+  padding: 0.5rem 1rem;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hide-table-button:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.all-leads-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.all-leads-subtitle {
+  color: #64748b;
+  margin-bottom: 2rem;
+}
+
+.all-leads-loading {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+}
+
+.all-leads-loading .loading-spinner {
+  margin-bottom: 1rem;
+}
+
+.no-leads {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #64748b;
+}
+
+/* Desktop Table Styles - Hide by default (mobile first) */
+.desktop-only {
+  display: none;
+}
+
+.leads-table-container {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.leads-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.leads-table th {
+  background: #f8fafc;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.leads-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.lead-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.lead-row:hover {
+  background: #f8fafc;
+}
+
+.lead-row:last-child td {
+  border-bottom: none;
+}
+
+.lead-name-cell .lead-name {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.lead-name-cell .lead-title {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.lead-company {
+  color: #475569;
+}
+
+.lead-status-cell {
+  text-align: center;
+}
+
+/* Mobile Card Styles - Show by default (mobile first) */
+.mobile-only {
+  display: block;
+}
+
+.leads-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lead-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.lead-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #cbd5e1;
+}
+
+.lead-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.lead-card-info {
+  flex: 1;
+}
+
+.lead-card-info .lead-name {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  font-size: 1.125rem;
+}
+
+.lead-card-info .lead-title {
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.lead-card-info .lead-company {
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.lead-card-status {
+  flex-shrink: 0;
+}
+
+/* Status Badge Styles */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.status-badge.new {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.contacted {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.qualified {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.unknown {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 /* Lead Info Styles */
 .lead-info {
   background: white;
@@ -464,6 +678,7 @@ body {
   }
   
   .lead-lookup,
+  .all-leads,
   .lead-info,
   .insights-section {
     padding: 2.5rem;
@@ -484,6 +699,15 @@ body {
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
   }
+
+  /* Show desktop table, hide mobile cards */
+  .desktop-only {
+    display: block;
+  }
+  
+  .mobile-only {
+    display: none;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -492,6 +716,7 @@ body {
   }
   
   .lead-lookup,
+  .all-leads,
   .lead-info,
   .insights-section {
     padding: 3rem;
