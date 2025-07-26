@@ -1,12 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LeadLookup from './components/LeadLookup';
 import AllLeads from './components/AllLeads';
 import LeadInfo from './components/LeadInfo';
 import InsightsSection from './components/InsightsSection';
 import type { Lead, LeadInsight } from './types/lead';
-import { suiteCRMApi } from './services/suitecrmApi';
-import { aiInsights } from './services/aiInsights';
+import { dataService } from './services/dataService';
 import './App.css';
 
 function App() {
@@ -17,7 +16,30 @@ function App() {
   const [isLoadingLead, setIsLoadingLead] = useState(false);
   const [isLoadingLeads, setIsLoadingLeads] = useState(false);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string>('');
+
+  // Initialize the app when it loads
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        setIsInitializing(true);
+        setError('');
+        
+        // Initialize the data service (fetch from API and store in IndexedDB)
+        await dataService.initializeApp();
+        
+        console.log('Application initialized successfully');
+      } catch (err) {
+        console.error('Failed to initialize application:', err);
+        setError('Failed to initialize application. Please check your SuiteCRM connection.');
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
 
   const handleSearchLead = async (leadId: string) => {
     setIsLoadingLead(true);
@@ -28,18 +50,23 @@ function App() {
     setShowAllLeads(false); // Hide leads table when searching
 
     try {
-      // For demo purposes, using mock data. In production, use actual API:
-      // const leadData = await suiteCRMApi.getLeadById(leadId);
-      const leadData = await suiteCRMApi.getMockLead(leadId);
+      // Get lead from IndexedDB/API
+      const leadData = await dataService.getLeadById(leadId);
+      
+      if (!leadData) {
+        setError(`Lead with ID "${leadId}" not found`);
+        return;
+      }
+      
       setLead(leadData);
       
-      // Generate AI insights
+      // Generate/retrieve AI insights
       setIsLoadingInsights(true);
-      const generatedInsights = await aiInsights.generateInsights(leadData);
+      const generatedInsights = await dataService.getOrGenerateInsights(leadData);
       setInsights(generatedInsights);
       
     } catch (err) {
-      setError('Failed to generate insights');
+      setError('Failed to load lead or generate insights');
       console.error('Error:', err);
     } finally {
       setIsLoadingLead(false);
@@ -55,9 +82,8 @@ function App() {
     setShowAllLeads(true);
 
     try {
-      // For demo purposes, using mock data. In production, use actual API:
-      // const leadsData = await suiteCRMApi.getAllLeads();
-      const leadsData = await suiteCRMApi.getMockLeads();
+      // Get all leads from IndexedDB
+      const leadsData = await dataService.getAllLeads();
       setLeads(leadsData);
     } catch (err) {
       setError('Failed to load leads');
@@ -75,8 +101,8 @@ function App() {
     setShowAllLeads(false); // Hide leads table when a lead is selected
 
     try {
-      // Generate AI insights for selected lead
-      const generatedInsights = await aiInsights.generateInsights(selectedLead);
+      // Generate/retrieve AI insights for selected lead
+      const generatedInsights = await dataService.getOrGenerateInsights(selectedLead);
       setInsights(generatedInsights);
     } catch (err) {
       setError('Failed to generate insights');
@@ -90,6 +116,24 @@ function App() {
     setShowAllLeads(false);
     setLeads([]);
   };
+
+  // Show initialization screen while app is starting up
+  if (isInitializing) {
+    return (
+      <div className="app">
+        <Header />
+        <main className="main-content">
+          <div className="container">
+            <div className="initialization-container">
+              <div className="loading-spinner"></div>
+              <p>Initializing Lead Navigator...</p>
+              <p className="initialization-detail">Connecting to SuiteCRM and setting up local storage</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app">

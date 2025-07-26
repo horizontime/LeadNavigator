@@ -1,9 +1,174 @@
 import type { Lead, LeadInsight } from '../types/lead';
 
 class AIInsightsService {
+  private openaiApiKey: string;
+  private apiUrl = 'https://api.openai.com/v1/chat/completions';
+
+  constructor() {
+    this.openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+    if (!this.openaiApiKey) {
+      console.warn('OpenAI API key not found. Please set VITE_OPENAI_API_KEY in your .env file');
+    }
+  }
+
   async generateInsights(lead: Lead): Promise<LeadInsight[]> {
-    // In production, this would call an actual AI service (OpenAI, Claude, etc.)
-    // For now, we'll generate insights based on the lead data
+    if (!this.openaiApiKey) {
+      console.warn('No OpenAI API key available, falling back to mock insights');
+      return this.generateMockInsights(lead);
+    }
+
+    try {
+      const prompt = this.buildPrompt(lead);
+      const response = await this.callOpenAI(prompt);
+      return this.parseInsightsFromResponse(response);
+    } catch (error) {
+      console.error('Failed to generate AI insights:', error);
+      // Fallback to mock insights if OpenAI fails
+      return this.generateMockInsights(lead);
+    }
+  }
+
+  private buildPrompt(lead: Lead): string {
+    const leadData = {
+      name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim(),
+      title: lead.title,
+      company: lead.account_name,
+      email: lead.email1,
+      phone: lead.phone_mobile || lead.phone_work,
+      website: lead.website,
+      leadSource: lead.lead_source,
+      status: lead.status,
+      description: lead.description,
+      department: lead.department,
+      location: `${lead.primary_address_city || ''}, ${lead.primary_address_state || ''}, ${lead.primary_address_country || ''}`.replace(/^,\s*|,\s*$/g, ''),
+      dateEntered: lead.date_entered,
+      dateModified: lead.date_modified
+    };
+
+    return `You are an expert sales analyst. Analyze the following lead information and provide exactly 4 specific, actionable insights in JSON format.
+
+Lead Information:
+- Name: ${leadData.name}
+- Title: ${leadData.title || 'Not specified'}
+- Company: ${leadData.company || 'Not specified'}
+- Email: ${leadData.email || 'Not specified'}
+- Phone: ${leadData.phone || 'Not specified'}
+- Website: ${leadData.website || 'Not specified'}
+- Lead Source: ${leadData.leadSource || 'Not specified'}
+- Status: ${leadData.status || 'Not specified'}
+- Description: ${leadData.description || 'Not specified'}
+- Department: ${leadData.department || 'Not specified'}
+- Location: ${leadData.location || 'Not specified'}
+- Date Entered: ${leadData.dateEntered || 'Not specified'}
+- Last Modified: ${leadData.dateModified || 'Not specified'}
+
+Generate exactly 4 insights with the following categories:
+1. "engagement" - Analyze engagement level and recommend next action
+2. "opportunity" - Identify cross-selling/upselling opportunities based on role and needs
+3. "strategy" - Provide geographic, timing, or approach strategy recommendations
+4. "priority" - Assess lead priority and urgency level
+
+Return the response as a JSON array with this exact format:
+[
+  {
+    "id": "engagement-1",
+    "title": "Lead Engagement Level & Next Action",
+    "content": "Specific analysis and recommended action...",
+    "category": "engagement",
+    "confidence": 0.85
+  },
+  {
+    "id": "opportunity-1", 
+    "title": "Cross-selling & Upselling Opportunities",
+    "content": "Specific opportunities based on role and stated needs...",
+    "category": "opportunity",
+    "confidence": 0.8
+  },
+  {
+    "id": "strategy-1",
+    "title": "Outreach Strategy Recommendation", 
+    "content": "Strategic approach recommendations...",
+    "category": "strategy",
+    "confidence": 0.8
+  },
+  {
+    "id": "priority-1",
+    "title": "Lead Priority Assessment",
+    "content": "Priority level and reasoning...",
+    "category": "priority", 
+    "confidence": 0.85
+  }
+]
+
+Confidence should be between 0.5 and 1.0. Make insights specific, actionable, and relevant to the lead data provided. Do not include any text outside the JSON array.`;
+  }
+
+  private async callOpenAI(prompt: string): Promise<string> {
+    const response = await fetch(this.apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.openaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from OpenAI API');
+    }
+
+    return data.choices[0].message.content;
+  }
+
+  private parseInsightsFromResponse(response: string): LeadInsight[] {
+    try {
+      // Clean the response - remove any potential markdown formatting
+      const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      const insights = JSON.parse(cleanedResponse);
+      
+      if (!Array.isArray(insights)) {
+        throw new Error('Response is not an array');
+      }
+
+      // Validate insights structure
+      const validInsights = insights.filter(insight => 
+        insight.id && 
+        insight.title && 
+        insight.content && 
+        insight.category && 
+        typeof insight.confidence === 'number'
+      );
+
+      if (validInsights.length === 0) {
+        throw new Error('No valid insights found in response');
+      }
+
+      return validInsights;
+    } catch (error) {
+      console.error('Failed to parse insights from OpenAI response:', error);
+      console.error('Raw response:', response);
+      throw new Error('Failed to parse AI insights response');
+    }
+  }
+
+  // Fallback mock insights method
+  private generateMockInsights(lead: Lead): LeadInsight[] {
     const insights: LeadInsight[] = [];
 
     // Engagement Level Analysis

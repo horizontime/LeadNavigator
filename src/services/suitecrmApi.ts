@@ -1,188 +1,171 @@
 import axios from 'axios';
-import type { Lead } from '../types/lead';
+import type { Lead, SuiteCRMLeadResponse, SuiteCRMLeadAttributes, AuthTokenResponse } from '../types/lead';
 
 class SuiteCRMApi {
   private baseUrl: string;
-  private apiKey: string;
+  private accessTokenUrl: string;
   private token: string | null = null;
+  private tokenExpiry: number | null = null;
 
   constructor() {
-    // These should be set via environment variables in production
-    this.baseUrl = import.meta.env.VITE_SUITECRM_URL || 'http://localhost/suitecrm/public/legacy/Api/V8';
-    this.apiKey = import.meta.env.VITE_SUITECRM_API_KEY || '';
+    // Base URLs from the user's examples
+    this.baseUrl = 'http://localhost:18080/SuiteCRM-8.8.0/public/legacy/Api/V8';
+    this.accessTokenUrl = 'http://localhost:18080/SuiteCRM-8.8.0/public/legacy/Api/access_token';
   }
 
-  async authenticate(username: string, password: string): Promise<void> {
+  /**
+   * Authenticate and get access token using client credentials
+   */
+  async authenticate(): Promise<void> {
     try {
-      const response = await axios.post(`${this.baseUrl}/oauth2/token`, {
-        grant_type: 'password',
-        client_id: this.apiKey,
-        username,
-        password,
+      const response = await axios.post<AuthTokenResponse>(this.accessTokenUrl, {
+        grant_type: 'client_credentials',
+        client_id: 'e01902d6-d26a-4f7e-9496-6883b8548485',
+        client_secret: 'ASecurePassword'
       });
+
       this.token = response.data.access_token;
+      // Set token expiry (subtract 60 seconds for safety buffer)
+      this.tokenExpiry = Date.now() + (response.data.expires_in - 60) * 1000;
+      
+      console.log('SuiteCRM authentication successful');
     } catch (error) {
       console.error('Authentication failed:', error);
       throw new Error('Failed to authenticate with SuiteCRM');
     }
   }
 
+  /**
+   * Check if current token is valid
+   */
+  private isTokenValid(): boolean {
+    return this.token !== null && 
+           this.tokenExpiry !== null && 
+           Date.now() < this.tokenExpiry;
+  }
+
+  /**
+   * Ensure we have a valid token, authenticate if needed
+   */
+  private async ensureAuthenticated(): Promise<void> {
+    if (!this.isTokenValid()) {
+      await this.authenticate();
+    }
+  }
+
+  /**
+   * Transform SuiteCRM API response to our Lead format
+   */
+  private transformLeadData(apiLead: { id: string; attributes: SuiteCRMLeadAttributes }): Lead {
+    return {
+      id: apiLead.id,
+      name: apiLead.attributes.name,
+      first_name: apiLead.attributes.first_name,
+      last_name: apiLead.attributes.last_name,
+      full_name: apiLead.attributes.full_name,
+      title: apiLead.attributes.title,
+      account_name: apiLead.attributes.account_name,
+      email1: apiLead.attributes.email1,
+      email2: apiLead.attributes.email2,
+      phone_mobile: apiLead.attributes.phone_mobile,
+      phone_work: apiLead.attributes.phone_work,
+      phone_home: apiLead.attributes.phone_home,
+      phone_other: apiLead.attributes.phone_other,
+      phone_fax: apiLead.attributes.phone_fax,
+      website: apiLead.attributes.website,
+      lead_source: apiLead.attributes.lead_source,
+      lead_source_description: apiLead.attributes.lead_source_description,
+      status: apiLead.attributes.status,
+      status_description: apiLead.attributes.status_description,
+      description: apiLead.attributes.description,
+      department: apiLead.attributes.department,
+      primary_address_street: apiLead.attributes.primary_address_street,
+      primary_address_street_2: apiLead.attributes.primary_address_street_2,
+      primary_address_street_3: apiLead.attributes.primary_address_street_3,
+      primary_address_city: apiLead.attributes.primary_address_city,
+      primary_address_state: apiLead.attributes.primary_address_state,
+      primary_address_postalcode: apiLead.attributes.primary_address_postalcode,
+      primary_address_country: apiLead.attributes.primary_address_country,
+      alt_address_street: apiLead.attributes.alt_address_street,
+      alt_address_city: apiLead.attributes.alt_address_city,
+      alt_address_state: apiLead.attributes.alt_address_state,
+      alt_address_postalcode: apiLead.attributes.alt_address_postalcode,
+      alt_address_country: apiLead.attributes.alt_address_country,
+      assigned_user_name: apiLead.attributes.assigned_user_name,
+      created_by_name: apiLead.attributes.created_by_name,
+      modified_by_name: apiLead.attributes.modified_by_name,
+      date_entered: apiLead.attributes.date_entered,
+      date_modified: apiLead.attributes.date_modified,
+      converted: apiLead.attributes.converted,
+      salutation: apiLead.attributes.salutation,
+      do_not_call: apiLead.attributes.do_not_call,
+      email_opt_out: apiLead.attributes.email_opt_out,
+      invalid_email: apiLead.attributes.invalid_email,
+      assistant: apiLead.attributes.assistant,
+      assistant_phone: apiLead.attributes.assistant_phone,
+      refered_by: apiLead.attributes.refered_by,
+      reports_to_id: apiLead.attributes.reports_to_id,
+      report_to_name: apiLead.attributes.report_to_name,
+      account_description: apiLead.attributes.account_description,
+      contact_id: apiLead.attributes.contact_id,
+      account_id: apiLead.attributes.account_id,
+      opportunity_id: apiLead.attributes.opportunity_id,
+      opportunity_name: apiLead.attributes.opportunity_name,
+      opportunity_amount: apiLead.attributes.opportunity_amount,
+      campaign_id: apiLead.attributes.campaign_id,
+      campaign_name: apiLead.attributes.campaign_name,
+      birthdate: apiLead.attributes.birthdate,
+      portal_name: apiLead.attributes.portal_name,
+      portal_app: apiLead.attributes.portal_app
+    };
+  }
+
+  /**
+   * Get a specific lead by ID
+   */
   async getLeadById(leadId: string): Promise<Lead> {
+    await this.ensureAuthenticated();
+
     try {
-      const response = await axios.get(`${this.baseUrl}/module/Leads/${leadId}`, {
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return response.data.data.attributes;
+      const response = await axios.get<{ data: { id: string; attributes: SuiteCRMLeadAttributes } }>(
+        `${this.baseUrl}/module/Leads/${leadId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      return this.transformLeadData(response.data.data);
     } catch (error) {
       console.error('Failed to fetch lead:', error);
-      throw new Error('Failed to fetch lead data');
+      throw new Error(`Failed to fetch lead with ID: ${leadId}`);
     }
   }
 
-  async getAllLeads(limit = 20): Promise<Lead[]> {
+  /**
+   * Get all leads from SuiteCRM
+   */
+  async getAllLeads(): Promise<Lead[]> {
+    await this.ensureAuthenticated();
+
     try {
-      const response = await axios.get(`${this.baseUrl}/module/Leads`, {
-        headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
-        },
-        params: {
-          'page[size]': limit,
-        },
-      });
-      return response.data.data.map((item: any) => ({
-        id: item.id,
-        ...item.attributes,
-      }));
+      const response = await axios.get<SuiteCRMLeadResponse>(
+        `${this.baseUrl}/module/Leads`,
+        {
+          headers: {
+            'Authorization': `Bearer ${this.token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      return response.data.data.map(item => this.transformLeadData(item));
     } catch (error) {
       console.error('Failed to fetch leads:', error);
-      throw new Error('Failed to fetch leads data');
+      throw new Error('Failed to fetch leads from SuiteCRM');
     }
-  }
-
-  // Mock method for development - returns multiple leads
-  async getMockLeads(): Promise<Lead[]> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    return [
-      {
-        id: 'lead-001',
-        first_name: 'John',
-        last_name: 'Smith',
-        title: 'IT Director',
-        account_name: 'TechCorp Solutions',
-        email1: 'j.smith@techcorp.com',
-        phone_mobile: '+1-555-0123',
-        phone_work: '+1-555-0123',
-        website: 'https://techcorp.com',
-        lead_source: 'Website',
-        status: 'New',
-        description: 'Looking for cloud migration solutions for enterprise infrastructure.',
-        department: 'Information Technology',
-        primary_address_city: 'San Francisco',
-        primary_address_state: 'California',
-        primary_address_country: 'USA',
-        date_entered: '2024-01-25T09:00:00Z',
-        date_modified: '2024-01-25T09:00:00Z',
-      },
-      {
-        id: 'lead-002',
-        first_name: 'Sarah',
-        last_name: 'Johnson',
-        title: 'Operations Manager',
-        account_name: 'Manufacturing Plus',
-        email1: 's.johnson@mfgplus.com',
-        phone_mobile: '+1-555-0234',
-        phone_work: '+1-555-0234',
-        website: 'https://manufacturingplus.com',
-        lead_source: 'Trade Show',
-        status: 'Qualified',
-        description: 'Interested in supply chain optimization and inventory management systems.',
-        department: 'Operations',
-        primary_address_city: 'Chicago',
-        primary_address_state: 'Illinois',
-        primary_address_country: 'USA',
-        date_entered: '2024-01-20T14:30:00Z',
-        date_modified: '2024-01-23T16:45:00Z',
-      },
-      {
-        id: 'lead-003',
-        first_name: 'Michael',
-        last_name: 'Chen',
-        title: 'VP of Technology',
-        account_name: 'Global Logistics Inc',
-        email1: 'm.chen@globallogistics.com',
-        phone_mobile: '+1-555-0345',
-        phone_work: '+1-555-0345',
-        website: 'https://globallogistics.com',
-        lead_source: 'Referral',
-        status: 'Contacted',
-        description: 'Needs warehouse management system integration with existing ERP.',
-        department: 'Technology',
-        primary_address_city: 'Dallas',
-        primary_address_state: 'Texas',
-        primary_address_country: 'USA',
-        date_entered: '2024-01-15T10:30:00Z',
-        date_modified: '2024-01-20T14:45:00Z',
-      },
-      {
-        id: 'lead-004',
-        first_name: 'Emily',
-        last_name: 'Rodriguez',
-        title: 'Chief Information Officer',
-        account_name: 'Retail Solutions Co',
-        email1: 'e.rodriguez@retailsolutions.com',
-        phone_mobile: '+1-555-0456',
-        phone_work: '+1-555-0456',
-        website: 'https://retailsolutions.com',
-        lead_source: 'Cold Call',
-        status: 'New',
-        description: 'Evaluating CRM and customer analytics platforms for multi-location retail chain.',
-        department: 'Information Technology',
-        primary_address_city: 'New York',
-        primary_address_state: 'New York',
-        primary_address_country: 'USA',
-        date_entered: '2024-01-28T11:15:00Z',
-        date_modified: '2024-01-28T11:15:00Z',
-      },
-      {
-        id: 'lead-005',
-        first_name: 'David',
-        last_name: 'Wilson',
-        title: 'IT Manager',
-        account_name: 'Healthcare Systems Ltd',
-        email1: 'd.wilson@healthcaresys.com',
-        phone_mobile: '+1-555-0567',
-        phone_work: '+1-555-0567',
-        website: 'https://healthcaresystems.com',
-        lead_source: 'LinkedIn',
-        status: 'Qualified',
-        description: 'Seeking HIPAA-compliant data management and patient record systems.',
-        department: 'Information Technology',
-        primary_address_city: 'Boston',
-        primary_address_state: 'Massachusetts',
-        primary_address_country: 'USA',
-        date_entered: '2024-01-18T13:20:00Z',
-        date_modified: '2024-01-22T10:30:00Z',
-      },
-    ];
-  }
-
-  // Mock method for development - returns single lead by ID
-  async getMockLead(leadId: string): Promise<Lead> {
-    const leads = await this.getMockLeads();
-    const lead = leads.find(l => l.id === leadId);
-    
-    if (lead) {
-      return lead;
-    }
-    
-    // Return default lead if not found
-    return leads[2]; // Michael Chen as default
   }
 }
 

@@ -651,6 +651,29 @@ body {
   margin-bottom: 1rem;
 }
 
+/* Initialization Styles */
+.initialization-container {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #64748b;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.initialization-container .loading-spinner {
+  margin-bottom: 1.5rem;
+}
+
+.initialization-container p {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
+.initialization-detail {
+  font-size: 0.9rem !important;
+  color: #94a3b8 !important;
+}
+
 /* Error Message */
 .error-message {
   background: #fee2e2;
