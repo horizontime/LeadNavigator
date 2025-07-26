@@ -67,7 +67,7 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
                         </td>
                         <td className="lead-company">{lead.account_name || 'N/A'}</td>
                         <td className="lead-status-cell">
-                          <span className={`status-badge ${lead.status?.toLowerCase() || 'unknown'}`}>
+                          <span className={`status-badge ${lead.status?.toLowerCase().replace(/\s+/g, '_') || 'unknown'}`}>
                             {lead.status || 'Unknown'}
                           </span>
                         </td>
@@ -95,7 +95,7 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
                         <div className="lead-company">{lead.account_name || 'N/A'}</div>
                       </div>
                       <div className="lead-card-status">
-                        <span className={`status-badge ${lead.status?.toLowerCase() || 'unknown'}`}>
+                        <span className={`status-badge ${lead.status?.toLowerCase().replace(/\s+/g, '_') || 'unknown'}`}>
                           {lead.status || 'Unknown'}
                         </span>
                       </div>

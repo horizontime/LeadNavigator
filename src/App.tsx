@@ -41,35 +41,23 @@ function App() {
     initializeApp();
   }, []);
 
-  const handleSearchLead = async (leadId: string) => {
-    setIsLoadingLead(true);
+  const handleSearchLead = async (selectedLead: Lead) => {
     setIsLoadingInsights(false);
     setError('');
-    setLead(null);
+    setLead(selectedLead);
     setInsights([]);
     setShowAllLeads(false); // Hide leads table when searching
 
     try {
-      // Get lead from IndexedDB/API
-      const leadData = await dataService.getLeadById(leadId);
-      
-      if (!leadData) {
-        setError(`Lead with ID "${leadId}" not found`);
-        return;
-      }
-      
-      setLead(leadData);
-      
-      // Generate/retrieve AI insights
+      // Generate/retrieve AI insights for the selected lead
       setIsLoadingInsights(true);
-      const generatedInsights = await dataService.getOrGenerateInsights(leadData);
+      const generatedInsights = await dataService.getOrGenerateInsights(selectedLead);
       setInsights(generatedInsights);
       
     } catch (err) {
-      setError('Failed to load lead or generate insights');
+      setError('Failed to generate insights');
       console.error('Error:', err);
     } finally {
-      setIsLoadingLead(false);
       setIsLoadingInsights(false);
     }
   };
