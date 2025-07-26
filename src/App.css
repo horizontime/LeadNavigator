@@ -415,19 +415,20 @@ body {
 
 .leads-table td {
   padding: 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: none;
 }
 
 .lead-row {
   cursor: pointer;
   transition: background-color 0.2s;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .lead-row:hover {
   background: #f8fafc;
 }
 
-.lead-row:last-child td {
+.lead-row:last-child {
   border-bottom: none;
 }
 
