@@ -15,6 +15,14 @@ export class DataService {
       return;
     }
 
+    // Check if data already exists
+    const existingLeads = await db.getAllLeads();
+    if (existingLeads.length > 0) {
+      console.log('Data already exists in IndexedDB, skipping API fetch');
+      this.isInitialized = true;
+      return;
+    }
+
     try {
       console.log('Initializing application data...');
       
