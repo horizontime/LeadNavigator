@@ -42,10 +42,13 @@ class AIInsightsService {
       department: lead.department,
       location: `${lead.primary_address_city || ''}, ${lead.primary_address_state || ''}, ${lead.primary_address_country || ''}`.replace(/^,\s*|,\s*$/g, ''),
       dateEntered: lead.date_entered,
-      dateModified: lead.date_modified
+      dateModified: lead.date_modified,
+      referred_by: lead.refered_by,
+      status_description: lead.status_description,
+      lead_source_description: lead.lead_source_description,
     };
 
-    return `You are an expert sales analyst. Analyze the following lead information and provide exactly 4 specific, actionable insights in JSON format.
+    return `You are an expert sales analyst. Analyze the following lead information and provide exactly 6 specific, actionable insights in JSON format.
 
 Lead Information:
 - Name: ${leadData.name}
@@ -61,12 +64,17 @@ Lead Information:
 - Location: ${leadData.location || 'Not specified'}
 - Date Entered: ${leadData.dateEntered || 'Not specified'}
 - Last Modified: ${leadData.dateModified || 'Not specified'}
+- Referred By: ${leadData.referred_by || 'Not specified'}
+- Status Description: ${leadData.status_description || 'Not specified'}
+- Lead Source Description: ${leadData.lead_source_description || 'Not specified'}
 
-Generate exactly 4 insights with the following categories:
+Generate exactly 6 insights with the following categories:
 1. "engagement" - Analyze engagement level and recommend next action
 2. "opportunity" - Identify cross-selling/upselling opportunities based on role and needs
 3. "strategy" - Provide geographic, timing, or approach strategy recommendations
 4. "priority" - Assess lead priority and urgency level
+5. "conversation_starter" - Craft personalized ice-breakers or opening lines using the lead's name, title, company, description, website, source, and referrals. For example: "When reaching out to Tania Kinnard at Tortoise Corp, consider opening with: 'I saw your query about alternative options on our website; I'd love to explore how we can tailor a solution specifically for Tortoise Corp's operational needs as a Director of Operations.'"
+6. "red_flags" - Analyze descriptions, status details, and source info to predict potential objections or red flags. For example, if recycled due to budget: "This lead was previously marked 'Recycled' due to budget. Be prepared to discuss ROI and cost-saving aspects of our solution."
 
 Return the response as a JSON array with this exact format:
 [
@@ -96,6 +104,20 @@ Return the response as a JSON array with this exact format:
     "title": "Lead Priority Assessment",
     "content": "Priority level and reasoning...",
     "category": "priority", 
+    "confidence": 0.85
+  },
+  {
+    "id": "conversation_starter-1",
+    "title": "Personalized Conversation Starters",
+    "content": "Crafted ice-breakers or opening lines...",
+    "category": "conversation_starter",
+    "confidence": 0.85
+  },
+  {
+    "id": "red_flags-1",
+    "title": "Potential Red Flags / Objections Prediction",
+    "content": "Analysis of potential objections or areas of concern...",
+    "category": "red_flags",
     "confidence": 0.85
   }
 ]
@@ -186,6 +208,12 @@ Confidence should be between 0.5 and 1.0. Make insights specific, actionable, an
     // Lead Priority
     const priorityInsight = this.analyzePriority(lead);
     if (priorityInsight) insights.push(priorityInsight);
+
+    const conversationInsight = this.analyzeConversationStarters(lead);
+    if (conversationInsight) insights.push(conversationInsight);
+
+    const redFlagsInsight = this.analyzeRedFlags(lead);
+    if (redFlagsInsight) insights.push(redFlagsInsight);
 
     return insights;
   }
@@ -335,6 +363,52 @@ Confidence should be between 0.5 and 1.0. Make insights specific, actionable, an
       content: `Priority factors: ${factors.join(', ')}. ${priority === 'High' ? 'Schedule immediate follow-up.' : priority === 'Medium' ? 'Follow up within 2-3 days.' : 'Add to nurture campaign.'}`,
       category: 'priority',
       confidence: 0.85,
+    };
+  }
+
+  private analyzeConversationStarters(lead: Lead): LeadInsight | null {
+    const name = lead.full_name || `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
+    const title = lead.title ? `as ${lead.title}` : '';
+    const company = lead.account_name ? `at ${lead.account_name}` : '';
+    const source = lead.lead_source ? `from your ${lead.lead_source}` : '';
+    const referred = lead.refered_by ? `referred by ${lead.refered_by}` : '';
+    const websiteMention = lead.website ? `I noticed on your website...` : '';
+    const desc = lead.description ? `regarding "${lead.description}"` : '';
+
+    const opener = `Hi ${name}, ${title} ${company} ${source} ${referred}, ${websiteMention} ${desc}. I'd love to explore how we can help.`;
+
+    return {
+      id: 'conversation_starter-1',
+      title: 'Personalized Conversation Starters',
+      content: `Suggested opening line: "${opener}" This makes initial contact more engaging.`,
+      category: 'conversation_starter',
+      confidence: 0.8
+    };
+  }
+
+  private analyzeRedFlags(lead: Lead): LeadInsight | null {
+    const flags: string[] = [];
+    const status = lead.status?.toLowerCase() || '';
+    if (status.includes('recycled') || status.includes('dead')) {
+      flags.push(`Previous status "${lead.status}" with description: ${lead.status_description || 'none'}.`);
+    }
+    const desc = lead.description?.toLowerCase() || '';
+    if (desc.includes('budget') || desc.includes('cost')) {
+      flags.push('Potential budget constraints mentioned in description.');
+    }
+    if (lead.lead_source_description && lead.lead_source_description.toLowerCase().includes('competitor')) {
+      flags.push('Lead source indicates competitor involvement.');
+    }
+    if (flags.length === 0) {
+      return null;
+    }
+    const content = `Potential red flags: ${flags.join(' ')} Suggestion: Pre-emptively address by highlighting ROI and cost-savings.`;
+    return {
+      id: 'red_flags-1',
+      title: 'Potential Red Flags / Objections Prediction',
+      content,
+      category: 'red_flags',
+      confidence: 0.75
     };
   }
 }

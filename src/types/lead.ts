@@ -155,7 +155,7 @@ interface LeadInsight {
   id: string;
   title: string;
   content: string;
-  category: 'engagement' | 'opportunity' | 'strategy' | 'priority';
+  category: 'engagement' | 'opportunity' | 'strategy' | 'priority' | 'conversation_starter' | 'red_flags';
   confidence: number;
 }
 
