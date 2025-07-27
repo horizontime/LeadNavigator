@@ -825,22 +825,6 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.insight-card.engagement {
-  border-left: 4px solid #3b82f6;
-}
-
-.insight-card.opportunity {
-  border-left: 4px solid #10b981;
-}
-
-.insight-card.strategy {
-  border-left: 4px solid #f59e0b;
-}
-
-.insight-card.priority {
-  border-left: 4px solid #ef4444;
-}
-
 .insight-header {
   display: flex;
   align-items: flex-start;
