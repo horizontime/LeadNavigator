@@ -88,9 +88,6 @@ export default function InsightsSection({ insights, isLoading = false, error }: 
               </div>
               <div className="insight-meta">
                 <h3 className="insight-title">{insight.title}</h3>
-                <span className={`confidence-badge ${getConfidenceLevel(insight.confidence)}`}>
-                  {Math.round(insight.confidence * 100)}% confidence
-                </span>
               </div>
             </div>
             <p className="insight-content">{insight.content}</p>
