@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import LeadLookup from './components/LeadLookup';
+import MobileQRCode from './components/MobileQRCode';
 import AllLeads from './components/AllLeads';
 import LeadInfo from './components/LeadInfo';
 import InsightsSection from './components/InsightsSection';
@@ -129,11 +130,14 @@ function App() {
       
       <main className="main-content">
         <div className="container">
-          <LeadLookup 
-            onSearchLead={handleSearchLead}
-            onBrowseLeads={handleBrowseLeads}
-            isLoading={isLoadingLead || isLoadingLeads}
-          />
+          <div className="lookup-qr-container">
+            <LeadLookup 
+              onSearchLead={handleSearchLead}
+              onBrowseLeads={handleBrowseLeads}
+              isLoading={isLoadingLead || isLoadingLeads}
+            />
+            <MobileQRCode />
+          </div>
 
           {error && (
             <div className="error-message">

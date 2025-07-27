@@ -70,14 +70,22 @@ body {
   padding: 2rem 0;
 }
 
+/* Lookup QR Container */
+.lookup-qr-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
 /* Lead Lookup Styles */
 .lead-lookup {
   background: white;
   border-radius: 1rem;
   padding: 2rem;
-  margin-bottom: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #d2d6de;
+  flex: 1;
 }
 
 .lead-lookup-title {
@@ -189,6 +197,51 @@ body {
 .browse-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Mobile QR Code Styles */
+.mobile-qr-code {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #d2d6de;
+  text-align: center;
+  flex: 1;
+  display: none; /* Hidden on mobile by default */
+}
+
+.mobile-qr-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #333333;
+}
+
+.mobile-qr-subtitle {
+  color: #666666;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.qr-code-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 0.75rem;
+  border: 2px solid #e9ecef;
+}
+
+.mobile-qr-url {
+  font-size: 0.8rem;
+  color: #666666;
+  font-family: 'Courier New', monospace;
+  background: #f4f4f4;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  word-break: break-all;
 }
 
 /* Autocomplete Suggestions Styles */
@@ -988,6 +1041,23 @@ body {
 }
 
 @media (min-width: 768px) {
+  /* Horizontal layout for desktop */
+  .lookup-qr-container {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  
+  /* Show QR code on desktop */
+  .mobile-qr-code {
+    display: block;
+    max-width: 400px;
+  }
+  
+  /* Reduce lead lookup max width */
+  .lead-lookup {
+    max-width: 480px;
+  }
+  
   .search-input-container {
     max-width: 24rem;
   }
