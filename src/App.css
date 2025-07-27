@@ -1050,7 +1050,7 @@ body {
   /* Show QR code on desktop */
   .mobile-qr-code {
     display: block;
-    max-width: 400px;
+    max-width: 520px;
   }
   
   /* Reduce lead lookup max width */

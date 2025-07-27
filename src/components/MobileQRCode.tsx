@@ -9,14 +9,12 @@ export default function MobileQRCode() {
       <div className="qr-code-container">
         <QRCode 
           value="http://localhost:5173/" 
-          size={180}
+          size={150}
           bgColor="#ffffff"
           fgColor="#2c3e50"
           level="M"
         />
-      </div>
-      
-      <p className="mobile-qr-url">http://localhost:5173/</p>
+      </div>      
     </div>
   );
 } 
