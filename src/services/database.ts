@@ -52,8 +52,11 @@ export class LeadDatabase extends Dexie {
     await this.insights.where('leadId').equals(leadId).delete();
     
     // Then store new insights
-    const insightRecords: InsightRecord[] = insights.map(insight => ({
-      ...insight,
+    const insightRecords = insights.map(insight => ({
+      title: insight.title,
+      content: insight.content,
+      category: insight.category,
+      confidence: insight.confidence,
       leadId,
       createdAt: new Date()
     }));
@@ -65,7 +68,7 @@ export class LeadDatabase extends Dexie {
   async getInsightsForLead(leadId: string): Promise<LeadInsight[]> {
     const records = await this.insights.where('leadId').equals(leadId).toArray();
     return records.map(record => ({
-      id: record.id,
+      id: record.id.toString(),
       title: record.title,
       content: record.content,
       category: record.category,
