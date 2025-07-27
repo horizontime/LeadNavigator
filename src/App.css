@@ -408,7 +408,7 @@ body {
 .all-leads-title {
   font-size: 1.5rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0;
   color: #333333;
 }
 
@@ -419,6 +419,13 @@ body {
 
 .all-leads-title-section {
   margin-bottom: 2rem;
+}
+
+.all-leads-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .leads-count {

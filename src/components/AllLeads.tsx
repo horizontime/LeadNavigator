@@ -63,12 +63,15 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
   if (isLoading) {
     return (
       <div className="all-leads">
-        <div className="all-leads-header">
-          <button onClick={onHideTable} className="hide-table-button">
-            Hide Table
-          </button>
-        </div>
         <div className="all-leads-loading">
+          <div className="all-leads-title-section">
+            <div className="all-leads-header-row">
+              <h2 className="all-leads-title">All Leads</h2>
+              <button onClick={onHideTable} className="hide-table-button">
+                Hide Table
+              </button>
+            </div>
+          </div>
           <div className="loading-spinner"></div>
           <p>Loading leads...</p>
         </div>
@@ -78,15 +81,14 @@ export default function AllLeads({ leads, onSelectLead, onHideTable, isLoading }
 
   return (
     <div className="all-leads">
-      <div className="all-leads-header">
-        <button onClick={onHideTable} className="hide-table-button">
-          Hide Table
-        </button>
-      </div>
-
       <div className="all-leads-content">
         <div className="all-leads-title-section">
-          <h2 className="all-leads-title">All Leads</h2>
+          <div className="all-leads-header-row">
+            <h2 className="all-leads-title">All Leads</h2>
+            <button onClick={onHideTable} className="hide-table-button">
+              Hide Table
+            </button>
+          </div>
           <p className="all-leads-subtitle">Tap on a lead to view detailed insights</p>
           {leads.length > 0 && (
             <div className="leads-count">
