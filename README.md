@@ -2,6 +2,19 @@
 
 A modern, mobile-first React application that integrates with SuiteCRM 8 to provide OpenAI-powered sales insights for lead management with offline-first data storage.
 
+SuiteCRM 8 was also modified to integrate the AI sales insights. The AI insights are populated using an n8n workflow.
+
+## Demo Screenshots
+
+[Companion app button in profile dropdown](demo-pics/pic1.PNG)  
+[Homepage of companion app](demo-pics/pic2.PNG)  
+[Companion app on mobile](demo-pics/pic3.PNG)  
+[Select a lead to generate AI sales insights](demo-pics/pic4.PNG)  
+[AI sales insights preview](demo-pics/pic5.PNG)  
+["Website info" field populated by n8n workflow](demo-pics/pic6.PNG)  
+[n8n workflow to populate AI insights (and Website info) in SuiteCRM](demo-pics/pic7.PNG)  
+[AI Insights tab for lead](demo-pics/pic8.PNG)
+[Some productivity tools added to SuiteCRM dashboard](demo-pics/pic9.PNG)
 
 ## ✨ Features
 
